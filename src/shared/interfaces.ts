@@ -18,6 +18,8 @@ export interface IPatchFlashcard {
 	category?: string;
 	front?: string
 	back?: string;
+	date?: string;
+	id?: string;
 }
 
 export interface IDatabase {
