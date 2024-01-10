@@ -1,165 +1,69 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { ChangeEvent, useContext, useState } from "react";
-import { AppContext } from "../AppContext";
-import { MdModeEditOutline, MdCancel } from "react-icons/md";
-import { RiDeleteBin6Line } from "react-icons/ri";
-import { SiOneplus } from "react-icons/si";
-import { FaSave } from "react-icons/fa";
-import {
-	IFlashcard,
-	INewFlashcard,
-	blankNewFlashcard,
-} from "../shared/interfaces";
+import { IFlashcard, INewFlashcard, IPatchFlashcard } from '../../../src/shared/interfaces';
+import { getDb, getSuuid } from './dbtools';
 
-export const PageManageFlashcards = () => {
-	const { flashcards, saveAddFlashcard, deleteFlashcard } = useContext(AppContext);
-	const [isAddingFlashcard, setIsAddingFlashcard] = useState(false);
-	const [newFlashcard, setNewFlashcard] = useState<INewFlashcard>(
-		structuredClone(blankNewFlashcard)
-	);
+const db = await getDb();
 
-	const handleChangeNewFlashcardField = (
-		e: ChangeEvent<HTMLInputElement>,
-		field: string
-	) => {
-		const value = e.target.value;
-		switch (field) {
-			case "category":
-				newFlashcard.category = value;
-				break;
-			case "front":
-				newFlashcard.front = value;
-				break;
-			case "back":
-				newFlashcard.back = value;
-				break;
-		}
-		const _newFlashcard = structuredClone(newFlashcard);
-		setNewFlashcard(_newFlashcard);
-	};
+export const getAllFlashcards = () => {
+	return db.data.flashcards;
+}
 
-	const handleCancelAddFlashcard = () => {
-		setIsAddingFlashcard(false);
-		setNewFlashcard(structuredClone(blankNewFlashcard));
-	};
+export const getOneFlashcard = (suuid: string) => {
+	const flashcard = db.data.flashcards.find(m => m.suuid === suuid);
 
-	const handleSaveAddFlashcard = () => {
-		(async () => {
-			try {
-				const response = await saveAddFlashcard(newFlashcard);
-				if (response.message === "ok") {
-					handleCancelAddFlashcard();
-				}
-			} catch (e: any) {
-				console.log(`${e.message}`);
-				alert("We're sorry, your flashcard cannot be saved at this time. Try again later, or contact 2342-234-23343.")
-			}
-		})();
-	};
+	if (flashcard) {
+		return flashcard;
+	} else {
+		return null;
+	}
+}
 
-	const handleDeleteFlashcard = (flashcard: IFlashcard) => {
-		deleteFlashcard(flashcard); 
+export const addFlashcard = async (newFlashcard: INewFlashcard) => {
+	const flashcard: IFlashcard = {
+		suuid: getSuuid(),
+		...newFlashcard,
+	}
+	db.data.flashcards.unshift(flashcard);
+	await db.write();
+	return flashcard;
+}
+
+export const replaceFlashcard = async (replacementFlashcard: IFlashcard) => {
+	const formerFlashcard = db.data.flashcards.find(m => m.suuid === replacementFlashcard.suuid);
+	if (formerFlashcard) {
+		formerFlashcard.category = replacementFlashcard.category;
+		formerFlashcard.front = replacementFlashcard.front;
+		formerFlashcard.back = replacementFlashcard.back;
+		await db.write();
+		return formerFlashcard;
+	} else {
+		return null;
+	}
+}
+
+export const replaceSomeFieldsInFlashcard = async (suuid: string, patchFlashcard: IPatchFlashcard) => {
+	const formerFlashcard = db.data.flashcards.find(m => m.suuid === suuid);
+	if (formerFlashcard) {
+		if (patchFlashcard.category) formerFlashcard.category = patchFlashcard.category;
+		if (patchFlashcard.front) formerFlashcard.front = patchFlashcard.front;
+		if (patchFlashcard.back) formerFlashcard.back = patchFlashcard.back;
+		await db.write();
+		return formerFlashcard;
+	} else {
+		return null;
+	}
+}
+
+export const deleteFlashcard = async (suuid: string) => {
+	const flashcard = db.data.flashcards.find(m => m.suuid === suuid);
+	const indexToRemove = db.data.flashcards.findIndex(item => item.suuid === suuid);
+	if (indexToRemove !== -1) {
+		db.data.flashcards.splice(indexToRemove, 1);
 	}
 
-	return (
-		<>
-			<p>There are {flashcards.length} flashcards:</p>
-
-			<form>
-				<table className="dataTable mt-4 w-[60rem]">
-					<thead>
-						<tr>
-							<th>SUUID</th>
-							<th>Category</th>
-							<th>Front</th>
-							<th>Back</th>
-							<th>
-								<div className="flex justify-center text-[#222] text-2xl">
-									<SiOneplus
-										onClick={() =>
-											setIsAddingFlashcard(
-												!isAddingFlashcard
-											)
-										}
-										className="cursor-pointer hover:text-green-900"
-									/>
-								</div>
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{isAddingFlashcard && (
-							<tr>
-								<td></td>
-								<td>
-									<input
-										value={newFlashcard.category}
-										onChange={(e) =>
-											handleChangeNewFlashcardField(
-												e,
-												"category"
-											)
-										}
-										className="w-full"
-									/>
-								</td>
-								<td>
-									<input
-										value={newFlashcard.front}
-										onChange={(e) =>
-											handleChangeNewFlashcardField(
-												e,
-												"front"
-											)
-										}
-										className="w-full"
-									/>
-								</td>
-								<td>
-									<input
-										value={newFlashcard.back}
-										onChange={(e) =>
-											handleChangeNewFlashcardField(
-												e,
-												"back"
-											)
-										}
-										className="w-full"
-									/>
-								</td>
-								<td>
-									<div className="flex gap-1">
-										<FaSave
-											onClick={handleSaveAddFlashcard}
-											className="cursor-pointer hover:text-green-900"
-										/>
-										<MdCancel
-											onClick={handleCancelAddFlashcard}
-											className="cursor-pointer hover:text-red-900"
-										/>
-									</div>
-								</td>
-							</tr>
-						)}
-						{flashcards.map((flashcard) => {
-							return (
-								<tr key={flashcard.suuid}>
-									<td>{flashcard.suuid}</td>
-									<td>{flashcard.category}</td>
-									<td>{flashcard.front}</td>
-									<td>{flashcard.back}</td>
-									<td>
-										<div className="flex gap-1">
-											<MdModeEditOutline className="cursor-pointer hover:text-green-900" />
-											<RiDeleteBin6Line onClick={() => handleDeleteFlashcard(flashcard)} className="cursor-pointer hover:text-red-900" />
-										</div>
-									</td>
-								</tr>
-							);
-						})}
-					</tbody>
-				</table>
-			</form>
-		</>
-	);
-};
+	if (flashcard) {
+		await db.write();
+		return flashcard;
+	} else {
+		return null;
+	}
+}

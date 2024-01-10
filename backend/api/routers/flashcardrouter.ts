@@ -54,4 +54,4 @@ flashcardRouter.delete('/:suuid', async (req, res) => {
 	} else {
 		res.status(404).json(`Flashcard with suuid "${suuid}" not found.`)
 	}
-})
+});
