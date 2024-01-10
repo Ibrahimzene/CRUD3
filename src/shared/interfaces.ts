@@ -15,6 +15,7 @@ export interface IFlashcard extends INewFlashcard {
 }
 
 export interface IFrontendFlashcard extends IFlashcard {
+	[x: string]: any;
 	userIsDeleting: boolean;
 }
 

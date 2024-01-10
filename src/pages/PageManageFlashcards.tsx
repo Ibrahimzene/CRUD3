@@ -1,69 +1,79 @@
-import { IFlashcard, INewFlashcard, IPatchFlashcard } from '../../../src/shared/interfaces';
-import { getDb, getSuuid } from './dbtools';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useContext, useState } from "react";
+import { AppContext } from "../AppContext";
+import {
+	IFrontendFlashcard,
+	INewFlashcard,
+	blankNewFlashcard,
+} from "../shared/interfaces";
+import { ManageFlashcardsTableHead } from "../components/ManageFlashcardsTableHead";
+import { ManageFlashcardsAddRow } from "../components/ManageFlashcardsAddRow";
+import { ManageFlashcardsMainRow } from "../components/ManageFlashcardsMainRow";
+import { ManageFlashcardsEditRow } from "../components/ManageFlashcardsEditRow";
+import React from "react";
 
-const db = await getDb();
+export const PageManageFlashcards = () => {
+	const { frontendFlashcards, setFrontendFlashcards } =
+		useContext(AppContext);
+	const [isAddingFlashcard, setIsAddingFlashcard] = useState(false);
+	const [newFlashcard, setNewFlashcard] = useState<INewFlashcard>(
+		structuredClone(blankNewFlashcard)
+	);
 
-export const getAllFlashcards = () => {
-	return db.data.flashcards;
-}
+	const toggleIsEditingFlashcard = (
+		frontendFlashcard: IFrontendFlashcard
+	) => {
+		frontendFlashcard.userIsDeleting = !frontendFlashcard.userIsDeleting;
+		console.log("toggling");
+		setFrontendFlashcards(structuredClone(frontendFlashcards));
+	};
 
-export const getOneFlashcard = (suuid: string) => {
-	const flashcard = db.data.flashcards.find(m => m.suuid === suuid);
+	return (
+		<>
+			<p>There are {frontendFlashcards.length} flashcards:</p>
 
-	if (flashcard) {
-		return flashcard;
-	} else {
-		return null;
-	}
-}
-
-export const addFlashcard = async (newFlashcard: INewFlashcard) => {
-	const flashcard: IFlashcard = {
-		suuid: getSuuid(),
-		...newFlashcard,
-	}
-	db.data.flashcards.unshift(flashcard);
-	await db.write();
-	return flashcard;
-}
-
-export const replaceFlashcard = async (replacementFlashcard: IFlashcard) => {
-	const formerFlashcard = db.data.flashcards.find(m => m.suuid === replacementFlashcard.suuid);
-	if (formerFlashcard) {
-		formerFlashcard.category = replacementFlashcard.category;
-		formerFlashcard.front = replacementFlashcard.front;
-		formerFlashcard.back = replacementFlashcard.back;
-		await db.write();
-		return formerFlashcard;
-	} else {
-		return null;
-	}
-}
-
-export const replaceSomeFieldsInFlashcard = async (suuid: string, patchFlashcard: IPatchFlashcard) => {
-	const formerFlashcard = db.data.flashcards.find(m => m.suuid === suuid);
-	if (formerFlashcard) {
-		if (patchFlashcard.category) formerFlashcard.category = patchFlashcard.category;
-		if (patchFlashcard.front) formerFlashcard.front = patchFlashcard.front;
-		if (patchFlashcard.back) formerFlashcard.back = patchFlashcard.back;
-		await db.write();
-		return formerFlashcard;
-	} else {
-		return null;
-	}
-}
-
-export const deleteFlashcard = async (suuid: string) => {
-	const flashcard = db.data.flashcards.find(m => m.suuid === suuid);
-	const indexToRemove = db.data.flashcards.findIndex(item => item.suuid === suuid);
-	if (indexToRemove !== -1) {
-		db.data.flashcards.splice(indexToRemove, 1);
-	}
-
-	if (flashcard) {
-		await db.write();
-		return flashcard;
-	} else {
-		return null;
-	}
-}
+			<form>
+				<table className="dataTable mt-4 w-[70rem]">
+					<ManageFlashcardsTableHead
+						isAddingFlashcard={isAddingFlashcard}
+						setIsAddingFlashcard={setIsAddingFlashcard}
+					/>
+					<tbody>
+						{isAddingFlashcard && (
+							<ManageFlashcardsAddRow
+								newFlashcard={newFlashcard}
+								setIsAddingFlashcard={setIsAddingFlashcard}
+								setNewFlashcard={setNewFlashcard}
+							/>
+						)}
+						{frontendFlashcards.map((frontendFlashcard) => {
+							return (
+								<React.Fragment key={frontendFlashcard.suuid}>
+									{frontendFlashcard.userIsDeleting ? (
+										<ManageFlashcardsEditRow
+											frontendFlashcard={
+												frontendFlashcard
+											}
+											toggleIsEditingFlashcard={
+												toggleIsEditingFlashcard
+											}
+										/>
+									) : (
+										<ManageFlashcardsMainRow
+											frontendFlashcard={
+												frontendFlashcard
+											}
+											toggleIsEditingFlashcard={
+												toggleIsEditingFlashcard
+											}
+										/>
+									)}
+								</React.Fragment>
+							);
+						})}
+					</tbody>
+				</table>
+			</form>
+		</>
+	);
+};

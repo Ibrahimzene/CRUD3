@@ -1,11 +1,12 @@
 import { SiOneplus } from "react-icons/si";
 
 interface IProps {
-	setIsAddingFlashcard: (isAddingFlashcard: boolean) => void;
 	isAddingFlashcard: boolean;
+	setIsAddingFlashcard: (isAddingFlashcard: boolean) => void;
+
 }
 
-export const FlashcardTableHead = ({ setIsAddingFlashcard, isAddingFlashcard }: IProps) => {
+export const ManageFlashcardsTableHead = ({isAddingFlashcard, setIsAddingFlashcard}:IProps) => {
 	return (
 		<thead>
 			<tr>
