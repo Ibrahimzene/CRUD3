@@ -6,7 +6,7 @@ import {
 	INewFlashcard,
 	blankNewFlashcard,
 } from "../shared/interfaces";
-import { ManageFlashcardsTableHead } from "../components/ManageFlashcardsTableHead";
+import { ManageFlashcardsTableHead } from "../components/ManageFlashcardsTableHead.tsx";
 import { ManageFlashcardsAddRow } from "../components/ManageFlashcardsAddRow";
 import { ManageFlashcardsMainRow } from "../components/ManageFlashcardsMainRow";
 import { ManageFlashcardsEditRow } from "../components/ManageFlashcardsEditRow";
@@ -23,7 +23,7 @@ export const PageManageFlashcards = () => {
 	const toggleIsEditingFlashcard = (
 		frontendFlashcard: IFrontendFlashcard
 	) => {
-		frontendFlashcard.userIsDeleting = !frontendFlashcard.userIsDeleting;
+		frontendFlashcard.userIsEditing = !frontendFlashcard.userIsEditing;
 		console.log("toggling");
 		setFrontendFlashcards(structuredClone(frontendFlashcards));
 	};
@@ -49,7 +49,7 @@ export const PageManageFlashcards = () => {
 						{frontendFlashcards.map((frontendFlashcard) => {
 							return (
 								<React.Fragment key={frontendFlashcard.suuid}>
-									{frontendFlashcard.userIsDeleting ? (
+									{frontendFlashcard.userIsEditing ? (
 										<ManageFlashcardsEditRow
 											frontendFlashcard={
 												frontendFlashcard
